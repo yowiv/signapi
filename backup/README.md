@@ -56,7 +56,7 @@
     --name jdsign \
     --restart always \
     -p 4545:4545 \
-    sanling000/jdsign
+    sanling000/signapi:jdsign
   ```
 
 ## Request Method

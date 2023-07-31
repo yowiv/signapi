@@ -48,7 +48,16 @@
   pm2 start jd_sign.py --interpreter /usr/bin/python3
   ```
   > Set the service to start automatically: `pm2 startup && pm2 save`
+  
 
+  ```Docker
+  docker run \
+    -itd \
+    --name jdsign \
+    --restart always \
+    -p 4545:4545 \
+    sanling000/jdsign
+  ```
 
 ## Request Method
 

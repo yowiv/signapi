@@ -61,6 +61,8 @@ def get_ep():
     return '{"hdid":"JM9F1ywUPwflvMIpYPok0tt5k9kW4ArJEU3lfLhxBqw=","ts":%s,"ridx":-1,"cipher":{"area":"%s","d_model":"%s","wifiBssid":"dW5hbw93bq==","osVersion":"CJS=","d_brand":"WQvrb21f","screen":"CtS1DIenCNqm","uuid":"%s","aid":"%s","openudid":"%s"},"ciphertype":5,"version":"1.2.0","appname":"com.jingdong.app.mall"}' % (
         int(ts) - random.randint(100, 1000), area, d_model, bsjduuid, bsjduuid, bsjduuid), jduuid, ts
 def get_sign(functionId, body, client, clientVersion):
+    if isinstance(body, dict):
+        body = json.dumps(body)
     ep, suid, st = get_ep()
     # print(ep)
     sv = random.choice(["102", "111", "120"])

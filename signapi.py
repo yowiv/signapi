@@ -17,7 +17,7 @@ server = flask.Flask(__name__)
 # 1. pip3 install flask -i https://mirrors.ustc.edu.cn/pypi/web/simple
 # 2. pm2 start signapi.py -x --interpreter python3
 # 3. curl http://127.0.0.1:17840/sign ，确定sign正常运行，有结果输出
-# 4. 添加变量 export M_API_SCAN_SIGN_URL="http://127.0.0.1:17840/sign"或者export JD_SIGN_KRAPI="http://127.0.0.1:17840/signkr"
+# 4. 添加变量 export M_API_SCAN_SIGN_URL="http://127.0.0.1:17840/sign"或者export JD_SIGN_KRAPI="http://127.0.0.1:17840/signkr" 或者export JD_SIGN_API="http://127.0.0.1:17840/signhw"
 # 5. 查看日志 pm2 log signapi
 
 
@@ -198,6 +198,40 @@ def task(func_id, body_json):
     data_str = f"body={body_str}&build=168069&client={client}&clientVersion={client_version}&d_brand=android&d_model={d_model}&ef=1&eid={eid}&ep={ep}&ext={ext}&isBackground=N&joycious=124&lang=zh_CN&networkType=wifi&networklibtype=JDNetworkBaseAF&partner=android&rfs=0000&scope=11&st={st}&sv={sv}&sign={sign}"
     return {"fn": func_id, "body": data_str}
 
+def taskhw(func_id, body_json):
+    body_str = (body_json).strip()
+    client = "android"
+    client_version = "10.4.0"
+    uuid = ''.join(random.sample('0123456789abcdef0123456789abcdef0123456789abcdef', 40))
+    d_model = random.choice(
+        ["HUAWEI(NOH-AN00)", "Xiaomi(MI 9 Transparent Edition)", "Meizu(16T)", "HTC U-3w", "Redmi K20 Pro Premium Edition"])
+    osVersion = random.choice(["10", "11", "12"])
+    area = ''.join(random.sample('0123456789', 2)) + '_' + ''.join(random.sample('0123456789', 4)) + '_' + ''.join(
+        random.sample('0123456789', 5)) + '_' + ''.join(random.sample('0123456789', 4))
+    wifiBssid = "TP_LINK_".join(random.sample('0123456789ABCDEFG', 6))
+    screen = random.choice(["640x1136", "750x1334", "1080x1920"])
+    randomeid = ''.join(random.sample('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', 20))
+    eid = f'eidAaf8081218as20a2GM${randomeid}7FnfQYOecyDYLcd0rfzm3Fy2ePY4UJJOeV0Ub840kG8C7lmIqt3DTlc11fB/s4qsAP8gtPTSoxu'
+    ext = quote('{"prstate":"0","pvcStu":"1"}')
+
+    sv, st, sign = get_sign(func_id, body_str, uuid, client, client_version)
+
+    ep = json.dumps({
+        "hdid": "JM9F1ywUPwflvMIpYPok0tt5k9kW4ArJEU3lfLhxBqw=",
+        "ts": st,
+        "ridx": -1,
+        "cipher": {"screen": base64Encode(screen), "wifiBssid": base64Encode(wifiBssid), "osVersion": base64Encode(osVersion),
+                   "area": base64Encode(area), "openudid": base64Encode(uuid), "uuid": base64Encode(uuid)},
+        "ciphertype": 5,
+        "version": "1.0.3",
+        "appname": "com.360buy.jdmobile",
+    }).replace(" ", "")
+
+    body_str = quote(body_str)
+    ep = quote(ep)
+    data_str = f"body={body_str}&client={client}&clientVersion={client_version}&uuid={uuid}&st={st}&sv={sv}&sign={sign}"
+    return {"fn": func_id, "body": data_str}
+    
 def taskkr(functionId, body_json):
     body_str = (body_json).strip()
     client = "android"
@@ -230,7 +264,7 @@ def taskkr(functionId, body_json):
     body_str = quote(body_str)
     ep = quote(ep)
     data_str = f"body={body_str}&client={client}&clientVersion={client_version}&uuid={uuid}&st={st}&sv={sv}&sign={sign}"
-    return {"data": {"st": st,"sv": sv,"sign": sign,"body": body_str,"clientVersion": data_str,"uuid": uuid,"functionId": functionId,"convertUrl": data_str,"client": client}}
+    return {"data": {"st": st,"sv": sv,"sign": sign,"body": body_str,"clientVersion": client_version,"uuid": uuid,"functionId": functionId,"convertUrl": data_str,"client": client}}
 
 @server.route('/sign', methods=['GET', 'POST'])
 def sign():
@@ -243,7 +277,19 @@ def sign():
         print(e)
         return 'sign error'
 
-@server.route('/signkr', methods=['post'])
+@server.route('/signhw', methods=['GET', 'POST'])
+def signhw():
+    try:
+        data = flask.request.data
+        data = json.loads(data.decode('utf-8'))
+        body_str = json.dumps(data['body']) if isinstance(data['body'], dict) else data['body']
+        data = taskhw(data['fn'], body_str)
+        return data
+    except Exception as e:
+        print(e)
+        return 'sign error'
+        
+@server.route('/signkr', methods=['GET', 'POST'])
 def signkr():
     try:
         form_data = request.form
@@ -259,4 +305,4 @@ def signkr():
         return 'signkr error'
 
 if __name__ == '__main__':
-    server.run(host='0.0.0.0', port=17840)
+    server.run(host='0.0.0.0', port=9090)
